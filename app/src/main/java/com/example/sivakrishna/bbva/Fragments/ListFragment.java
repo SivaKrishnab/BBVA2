@@ -1,6 +1,7 @@
 package com.example.sivakrishna.bbva.Fragments;
 
 
+import android.app.ProgressDialog;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -34,7 +35,7 @@ import java.util.ArrayList;
 public class ListFragment extends Fragment {
     private RecyclerView recyclerView;
     private java.util.List<BBva> list;
-
+ProgressDialog progressDialog;
     ListViewAdapter adapter;
 
 
@@ -101,9 +102,17 @@ public class ListFragment extends Fragment {
         }
 
         @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            progressDialog=new ProgressDialog(getContext());
+            progressDialog.setMessage("Loading");
+            progressDialog.show();
+        }
+
+        @Override
         protected void onPostExecute(Void aVoid) {
             super.onPostExecute(aVoid);
-
+            progressDialog.dismiss();
             recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
             Decorate decorate=new Decorate(getContext());
             recyclerView.addItemDecoration(decorate);

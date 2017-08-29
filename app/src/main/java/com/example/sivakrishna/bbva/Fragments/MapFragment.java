@@ -1,11 +1,20 @@
 package com.example.sivakrishna.bbva.Fragments;
 
 
+import android.Manifest;
+import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.provider.Settings;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -15,7 +24,7 @@ import android.widget.Toast;
 
 import com.example.sivakrishna.bbva.Pojo.BBva;
 import com.example.sivakrishna.bbva.activitiesintent.Display;
-import com.example.sivakrishna.bbva.GPSTracker;
+
 import com.example.sivakrishna.bbva.R;
 import com.example.sivakrishna.bbva.activitiesintent.Main2Activity;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -51,20 +60,22 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
 
     private GoogleMap mMap;
     private java.util.List<BBva> list;
-    LatLng me;
-    GPSTracker gps;
     String url;
-    double latitude;
-    double longitude;
     private PicassoMarker picassoMarker;
     public List<Marker> markers;
+    ProgressDialog progressDialog;
+
+
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
-         View view=inflater.inflate(R.layout.fragment_map, container, false);
+        View view = inflater.inflate(R.layout.fragment_map, container, false);
 
+        if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+
+        }
         SupportMapFragment mapFragment = (SupportMapFragment) getChildFragmentManager()
                 .findFragmentById(R.id.my_map);
         list = new ArrayList<>();
@@ -76,17 +87,30 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
-        gps = new GPSTracker(getContext());
-        if(gps.canGetLocation()){
 
-             latitude = gps.getLatitude();
-             longitude = gps.getLongitude();}
-        me = new LatLng( 39.009469,-76.895880);
-        mMap.addMarker(new MarkerOptions().position(me).title("Location").icon(BitmapDescriptorFactory
-                .defaultMarker(BitmapDescriptorFactory.HUE_AZURE)));
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(me, 2.0f));
+        if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+
+            return;
+        }
+        mMap.setMyLocationEnabled(true);
+        mMap.getUiSettings().setMyLocationButtonEnabled(true);
+
+        mMap.setOnMyLocationButtonClickListener(new GoogleMap.OnMyLocationButtonClickListener() {
+            @Override
+            public boolean onMyLocationButtonClick() {
+
+                mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(mMap.getMyLocation().getLatitude(),mMap.getMyLocation().getLongitude()),3.0f));
+                MarkerOptions marker=new MarkerOptions().position(new LatLng(mMap.getMyLocation().getLatitude(),mMap.getMyLocation().getLongitude())).title("Location");
+                mMap.addMarker(marker);
+                return true; }
+        });
+
+
 
     }
+
+
     private class Asynctask extends AsyncTask<Void,Void,Void>{
         StringBuffer response;
         @Override
@@ -136,8 +160,19 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         }
 
         @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+
+            progressDialog= new ProgressDialog(getActivity());
+            progressDialog.setMessage("Loading");
+            progressDialog.show();
+
+        }
+
+        @Override
         protected void onPostExecute(Void aVoid) {
             super.onPostExecute(aVoid);
+            progressDialog.dismiss();
             markers = new ArrayList<>();
             for(int i=0;i<list.size();i++){
                 LatLng temp =new LatLng(Double.valueOf(list.get(i).getLat()),Double.valueOf(list.get(i).getLng()));
@@ -155,8 +190,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
                     Picasso.with(getActivity()).load(url).into(picassoMarker);
                     builder.include(m.getPosition());
                 }
-
-              //  mMap.addMarker(new MarkerOptions().position(temp).title(list.get(i).getName()).snippet(list.get(i).getAddress()));
+                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(temp, 3.0f));
             }
             mMap.setOnInfoWindowClickListener(new GoogleMap.OnInfoWindowClickListener() {
 

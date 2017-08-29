@@ -57,7 +57,7 @@ public class ListViewAdapter extends RecyclerView.Adapter<ListViewAdapter.ViewHo
         TextView text,textView;
         ImageView imageView;
 
-        public ViewHolder(View itemView) {
+        public ViewHolder(final View itemView) {
             super(itemView);
             text=(TextView)itemView.findViewById(R.id.textView);
             textView=(TextView)itemView.findViewById(R.id.textView2);
