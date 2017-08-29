@@ -30,17 +30,18 @@ TextView textView7,textVie;
         button=(Button)findViewById(R.id.button);
         String name=getIntent().getStringExtra("name");
         address=getIntent().getStringExtra("address");
+        String image=getIntent().getStringExtra("picture");
         Log.e("ss",address);
-        if(address.equals(ad)){
+//        if(address.equals(ad)){
             textVie.setText(name);
             textView7.setText(address);
-            Picasso.with(Display.this).load("https://maps.gstatic.com/mapfiles/place_api/icons/generic_business-71.png").into(imageVie);
-        }
-        else {
-            textVie.setText(name);
-            textView7.setText(address);
-            Picasso.with(Display.this).load("https://maps.gstatic.com/mapfiles/place_api/icons/atm-71.png").into(imageVie);
-        }
+            Picasso.with(Display.this).load(image).into(imageVie);
+//        }
+//        else {
+//            textVie.setText(name);
+//            textView7.setText(address);
+//            Picasso.with(Display.this).load("https://maps.gstatic.com/mapfiles/place_api/icons/atm-71.png").into(imageVie);
+//        }
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {

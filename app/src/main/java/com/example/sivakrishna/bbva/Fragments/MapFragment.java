@@ -2,6 +2,8 @@ package com.example.sivakrishna.bbva.Fragments;
 
 
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -15,14 +17,18 @@ import com.example.sivakrishna.bbva.Pojo.BBva;
 import com.example.sivakrishna.bbva.activitiesintent.Display;
 import com.example.sivakrishna.bbva.GPSTracker;
 import com.example.sivakrishna.bbva.R;
+import com.example.sivakrishna.bbva.activitiesintent.Main2Activity;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.squareup.picasso.Picasso;
+import com.squareup.picasso.Target;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -35,6 +41,7 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.List;
 
 
 /**
@@ -46,8 +53,11 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
     private java.util.List<BBva> list;
     LatLng me;
     GPSTracker gps;
+    String url;
     double latitude;
     double longitude;
+    private PicassoMarker picassoMarker;
+    public List<Marker> markers;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -128,12 +138,25 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         @Override
         protected void onPostExecute(Void aVoid) {
             super.onPostExecute(aVoid);
+            markers = new ArrayList<>();
             for(int i=0;i<list.size();i++){
                 LatLng temp =new LatLng(Double.valueOf(list.get(i).getLat()),Double.valueOf(list.get(i).getLng()));
-                String url= list.get(i).getIcon();
+                 url= list.get(i).getIcon();
+                Log.e("d",url);
+                MarkerOptions markerOptions = new MarkerOptions();
+                LatLngBounds.Builder builder = new LatLngBounds.Builder();
 
+                markerOptions.position(temp);
+                markerOptions.title(list.get(i).getName());
+                markerOptions.snippet(list.get(i).getAddress());
+                markers.add(mMap.addMarker(markerOptions));
+                for (Marker m : markers) {
+                    picassoMarker = new PicassoMarker(m);
+                    Picasso.with(getActivity()).load(url).into(picassoMarker);
+                    builder.include(m.getPosition());
+                }
 
-                mMap.addMarker(new MarkerOptions().position(temp).title(list.get(i).getName()).snippet(list.get(i).getAddress()));
+              //  mMap.addMarker(new MarkerOptions().position(temp).title(list.get(i).getName()).snippet(list.get(i).getAddress()));
             }
             mMap.setOnInfoWindowClickListener(new GoogleMap.OnInfoWindowClickListener() {
 
@@ -144,7 +167,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
                             Toast.makeText(getContext(), "You location", Toast.LENGTH_SHORT).show();
                         } else {
                             Intent intent = new Intent(getContext(), Display.class);
-
+                            intent.putExtra("picture",url);
                             intent.putExtra("name", marker.getTitle());
                             intent.putExtra("address", marker.getSnippet());
                             startActivity(intent);
@@ -155,5 +178,44 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
                 }
             });}
         }
+
+    private class PicassoMarker implements Target {
+
+        Marker mMarker;
+
+        PicassoMarker(Marker marker) {
+            mMarker = marker;
+
+        }
+
+        @Override
+        public int hashCode() {
+            return mMarker.hashCode();
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (o instanceof PicassoMarker) {
+                Marker marker = ((PicassoMarker) o).mMarker;
+                return mMarker.equals(marker);
+            } else {
+                return false;
+            }
+        }
+
+        @Override
+        public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
+            mMarker.setIcon(BitmapDescriptorFactory.fromBitmap(bitmap));
+        }
+
+        @Override
+        public void onBitmapFailed(Drawable errorDrawable) {
+            Log.d("test: ", "bitmap fail");
+        }
+
+        @Override
+        public void onPrepareLoad(Drawable placeHolderDrawable) {
+        }
     }
+}
 
